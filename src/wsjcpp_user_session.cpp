@@ -22,23 +22,27 @@
  * SOFTWARE.
  ***********************************************************************************/
 
- #include "wsjcpp_user_session.h"
-
+#include "wsjcpp_user_session.h"
+#include <wsjcpp_core.h>
 
 WsjcppUserSession::WsjcppUserSession() {
   TAG = "WsjcppUserSession";
   m_nUserID = -1;
   m_sRole = "";
   m_sEmail = "";
-  m_sNick = "";
+  m_sNickName = "";
   m_sUserUuid = "";
 }
 
-WsjcppUserSession::WsjcppUserSession(nlohmann::json const &obj) : WsjcppUserSession() {
-    this->fillFrom(obj);
+WsjcppUserSession::WsjcppUserSession(const nlohmann::json &obj) : WsjcppUserSession() {
+  std::string sError;
+  if (!this->fillFrom(obj, sError)) {
+    WsjcppLog::err(TAG, sError);
+  }
 }
 
-void WsjcppUserSession::fillFrom(const nlohmann::json &obj) {
+bool WsjcppUserSession::fillFrom(const nlohmann::json &obj, std::string &sError) {
+  bool bResult = true;
   if (obj.find("user") != obj.end()) {
     nlohmann::json user = obj.at("user");
 
@@ -46,9 +50,11 @@ void WsjcppUserSession::fillFrom(const nlohmann::json &obj) {
     try {
       m_sRole = user.at("role").get<std::string>();
     } catch (const std::exception &e) {
-      WsjcppLog::err(TAG, "JSON: " + obj.dump());
-      WsjcppLog::err(TAG, "Something wrong param user.role in struct. " + std::string(e.what()));
+      // WsjcppLog::err(TAG, "JSON: " + obj.dump());
+      // WsjcppLog::err(TAG, "Something wrong param user.role in struct. " + std::string(e.what()));
+      sError = "Something wrong param user.role in struct. " + std::string(e.what());
       m_sRole = "";
+      bResult = false;
     }
 
     // TODO check allow roles
@@ -57,57 +63,92 @@ void WsjcppUserSession::fillFrom(const nlohmann::json &obj) {
     try {
       m_nUserID = user.at("id").get<int>();
     } catch (const std::exception &e) {
-      WsjcppLog::err(TAG, "JSON: " + obj.dump());
-      WsjcppLog::err(TAG, "Something wrong param user.id in struct. " + std::string(e.what()));
+      // WsjcppLog::err(TAG, "JSON: " + obj.dump());
+      // WsjcppLog::err(TAG, "Something wrong param user.id in struct. " + std::string(e.what()));
+      if (sError.size() > 0) sError += "\n";
+      sError += "Something wrong param user.id in struct. " + std::string(e.what());
       m_nUserID = -1;
+      bResult = false;
     }
 
     // user.email
     try {
       m_sEmail = user.at("email").get<std::string>();
     } catch (const std::exception &e) {
-      WsjcppLog::err(TAG, "JSON: " + obj.dump());
-      WsjcppLog::err(TAG, "Something wrong param user.email in struct. " + std::string(e.what()));
+      // WsjcppLog::err(TAG, "JSON: " + obj.dump());
+      // WsjcppLog::err(TAG, "Something wrong param user.email in struct. " + std::string(e.what()));
+      if (sError.size() > 0) sError += "\n";
+      sError += "Something wrong param user.email in struct. " + std::string(e.what());
       m_sEmail = "";
+      bResult = false;
     }
 
     // user.nick
     try {
-      m_sNick = user.at("nick").get<std::string>();
+      m_sNickName = user.at("nick").get<std::string>();
     } catch (const std::exception &e) {
-      WsjcppLog::err(TAG, "JSON: " + obj.dump());
-      WsjcppLog::err(TAG, "Something wrong param user.nick in struct. " + std::string(e.what()));
-      m_sNick = "";
+      // WsjcppLog::err(TAG, "JSON: " + obj.dump());
+      // WsjcppLog::err(TAG, "Something wrong param user.nick in struct. " + std::string(e.what()));
+      if (sError.size() > 0) sError += "\n";
+      sError += "Something wrong param user.nick in struct. " + std::string(e.what());
+      m_sNickName = "";
+      bResult = false;
     }
 
     // user.uuid
     try {
       m_sUserUuid = user.at("uuid").get<std::string>();
     } catch (const std::exception &e) {
-      WsjcppLog::err(TAG, "JSON: " + obj.dump());
-      WsjcppLog::err(TAG, "Something wrong param user.uuid in struct. " + std::string(e.what()));
+      // WsjcppLog::err(TAG, "JSON: " + obj.dump());
+      // WsjcppLog::err(TAG, "Something wrong param user.uuid in struct. " + std::string(e.what()));
+      if (sError.size() > 0) sError += "\n";
+      sError += "Something wrong param user.uuid in struct. " + std::string(e.what());
       m_sUserUuid = "";
+      bResult = false;
     }
-
   } else {
-    WsjcppLog::warn(TAG, "Not found param 'user' in struct");
+    sError = "Not found param 'user' in struct";
+    bResult = false;
   }
+  return bResult;
 }
 
-bool WsjcppUserSession::isAdmin() { return m_sRole == "admin"; }
+nlohmann::json WsjcppUserSession::toJson() {
+  nlohmann::json userInfo;
+  userInfo["role"] = m_sRole;
+  userInfo["nick"] = m_sNickName;
+  userInfo["email"] = m_sEmail;
+  userInfo["id"] = m_nUserID;
+  userInfo["uuid"] = m_sUserUuid;
+  nlohmann::json sessionInfo;
+  sessionInfo["user"] = userInfo;
+  return sessionInfo;
+}
 
-bool WsjcppUserSession::isUser() { return m_sRole == "user"; }
+void WsjcppUserSession::setRole(const std::string& role) { m_sRole = role; }
 
-bool WsjcppUserSession::isTester() { return m_sRole == "tester"; }
+std::string WsjcppUserSession::role() const { return m_sRole; }
 
-bool WsjcppUserSession::hasRole() { return m_sRole != ""; }
+bool WsjcppUserSession::isAdmin() const { return m_sRole == "admin"; }
 
-std::string WsjcppUserSession::nick() { return m_sNickname; }
+bool WsjcppUserSession::isUser() const { return m_sRole == "user"; }
 
-void WsjcppUserSession::setNick(QString sNick) { m_sNick = sNick.toStdString(); }
+bool WsjcppUserSession::isTester() const { return m_sRole == "tester"; }
 
-int WsjcppUserSession::userid() { return m_nUserID; }
+bool WsjcppUserSession::hasRole() const { return m_sRole != ""; }
 
-std::string WsjcppUserSession::userUuid() { return m_sUserUuid; }
+void WsjcppUserSession::setNick(const std::string &sNickName) { m_sNickName = sNickName; }
 
-std::string WsjcppUserSession::email() { return m_sEmail; }
+std::string WsjcppUserSession::nick() const { return m_sNickName; }
+
+void WsjcppUserSession::setEmail(const std::string& sEmail) { m_sEmail = sEmail; }
+
+std::string WsjcppUserSession::email() const { return m_sEmail; }
+
+void WsjcppUserSession::setUserId(int nUserId) { m_nUserID = nUserId; }
+
+int WsjcppUserSession::userid() const { return m_nUserID; }
+
+void WsjcppUserSession::setUserUuid(const std::string& sUserUuid) { m_sUserUuid = sUserUuid; }
+
+std::string WsjcppUserSession::userUuid() const { return m_sUserUuid; }

@@ -11,6 +11,7 @@ set(EXECUTABLE_OUTPUT_PATH ${wsjcpp-user-session_SOURCE_DIR})
 list (APPEND WSJCPP_INCLUDE_DIRS "src")
 
 list (APPEND WSJCPP_SOURCES "src/main.cpp")
+list (APPEND WSJCPP_SOURCES "src/wsjcpp_user_session.cpp")
 
 #### BEGIN_WSJCPP_APPEND
 #### END_WSJCPP_APPEND

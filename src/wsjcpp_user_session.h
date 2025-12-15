@@ -25,30 +25,37 @@
 #pragma once
 
 #include <string>
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 class WsjcppUserSession {
 public:
   WsjcppUserSession();
-  WsjcppUserSession(nlohmann::json const &obj);
-  void fillFrom(nlohmann::json const &obj);
+  WsjcppUserSession(const nlohmann::json &obj);
+  bool fillFrom(const nlohmann::json &obj, std::string &sError);
+  nlohmann::json toJson();
 
-  // IUserToken
-  bool isAdmin();
-  bool isUser();
-  bool isTester();
-  bool hasRole();
-  std::string nick();
-  void setNick(std::string);
-  std::string email();
-  int userid();
-  std::string userUuid();
+  void setRole(const std::string& role);
+  std::string role() const;
+
+  // TODO extending roles somehow
+  bool isAdmin() const;
+  bool isUser() const;
+  bool isTester() const;
+  bool hasRole() const;
+  void setNick(const std::string &sNickName);
+  std::string nick() const;
+  void setEmail(const std::string& sEmail);
+  std::string email() const;
+  void setUserId(int nUserId);
+  int userid() const;
+  void setUserUuid(const std::string& sUserUuid);
+  std::string userUuid() const;
   // TODO json field for customization
 
 private:
   std::string m_sRole;
   std::string m_sEmail;
-  std::string m_sNick;
+  std::string m_sNickName;
   int m_nUserID;
   std::string m_sUserUuid;
   std::string TAG;

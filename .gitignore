@@ -42,5 +42,6 @@
 
 # wsjcpp
 .wsjcpp
+.logs
 /tmp/
 /wsjcpp-user-session
